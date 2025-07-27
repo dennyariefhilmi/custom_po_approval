@@ -2,33 +2,28 @@
 <odoo>
     <data>
 
-        <!-- Purchase Order Form View Extension -->
         <record id="view_purchase_order_approval_form" model="ir.ui.view">
             <field name="name">purchase.order.approval.form</field>
             <field name="model">purchase.order</field>
             <field name="inherit_id" ref="purchase.purchase_order_form"/>
             <field name="arch" type="xml">
 
-                <!-- Add approval status header -->
                 <xpath expr="//header" position="inside">
                     <field name="approval_state" widget="statusbar"
                            statusbar_visible="draft,submitted,pending_manager,pending_dept_head,pending_cfo,pending_cfo_direct,approved,rejected"/>
 
-                    <!-- Submit for Approval Button -->
                     <button name="action_submit_for_approval"
                             string="Submit for Approval"
                             type="object"
                             class="btn-primary"
                             invisible="approval_state != 'draft'"/>
 
-                    <!-- Approve Button -->
                     <button name="action_approve"
                             string="Approve"
                             type="object"
                             class="btn-success"
                             invisible="approval_state not in ['pending_manager', 'pending_dept_head', 'pending_cfo', 'pending_cfo_direct']"/>
 
-                    <!-- Reject Button -->
                     <button name="action_reject"
                             string="Reject"
                             type="object"
@@ -36,14 +31,12 @@
                             invisible="approval_state not in ['pending_manager', 'pending_dept_head', 'pending_cfo', 'pending_cfo_direct']"/>
                 </xpath>
 
-                <!-- Add approval information in the main form -->
                 <xpath expr="//field[@name='partner_ref']" position="after">
                     <field name="amount_total_company" widget="monetary" options="{'currency_field': 'company_currency_id'}"/>
                     <field name="company_currency_id" invisible="1"/>
                     <field name="current_approver"/>
                 </xpath>
 
-                <!-- Add approval notebook page -->
                 <xpath expr="//notebook" position="inside">
                     <page string="Approval Information" name="approval_info">
                         <group>
@@ -70,7 +63,6 @@
             </field>
         </record>
 
-        <!-- Purchase Order Tree View Extension -->
         <record id="view_purchase_order_approval_tree" model="ir.ui.view">
             <field name="name">purchase.order.approval.tree</field>
             <field name="model">purchase.order</field>
@@ -87,7 +79,6 @@
             </field>
         </record>
 
-        <!-- Purchase Order Search View Extension -->
         <record id="view_purchase_order_approval_search" model="ir.ui.view">
             <field name="name">purchase.order.approval.search</field>
             <field name="model">purchase.order</field>
@@ -124,7 +115,6 @@
 
         </record>
 
-        <!-- Rejection Wizard Form -->
         <record id="view_purchase_order_reject_wizard" model="ir.ui.view">
             <field name="name">purchase.order.reject.wizard.form</field>
             <field name="model">purchase.order.reject.wizard</field>
@@ -142,7 +132,6 @@
             </field>
         </record>
 
-        <!-- Menu Items for Approval Workflows -->
         <record id="action_purchase_order_pending_approval" model="ir.actions.act_window">
             <field name="name">Purchase Orders - Pending My Approval</field>
             <field name="res_model">purchase.order</field>

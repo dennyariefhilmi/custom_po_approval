@@ -30,7 +30,6 @@ class PurchaseOrder(models.Model):
 
     @api.depends('order_line.price_total')
     def _compute_amount_total_company_currency(self):
-        """Compute total amount in company currency for approval logic"""
         for order in self:
             if order.currency_id != order.company_id.currency_id:
                 order.amount_total_company = order.currency_id._convert(
@@ -55,19 +54,17 @@ class PurchaseOrder(models.Model):
     )
 
     def _get_approval_route(self):
-        """Determine approval route based on amount"""
         self.ensure_one()
         amount_idr = self.amount_total_company
 
-        if amount_idr < 5000000:  # Less than IDR 5 million
+        if amount_idr < 5000000:
             return 'manager'
-        elif amount_idr <= 20000000:  # Between IDR 5-20 million
+        elif amount_idr <= 20000000:
             return 'dept_head_cfo'
-        else:  # More than IDR 20 million
+        else:
             return 'cfo_direct'
 
     def action_submit_for_approval(self):
-        """Submit PO for approval"""
         for order in self:
             if order.approval_state != 'draft':
                 raise ValidationError(_('Only draft purchase orders can be submitted for approval.'))
@@ -90,7 +87,7 @@ class PurchaseOrder(models.Model):
                          order._format_amount(),
                     message_type='notification'
                 )
-            else:  # cfo_direct
+            else:
                 order.approval_state = 'pending_cfo_direct'
                 order._assign_approver('cfo')
                 order.message_post(
@@ -103,7 +100,6 @@ class PurchaseOrder(models.Model):
             order._update_approval_sequence('Submitted for approval')
 
     def action_approve(self):
-        """Approve PO"""
         for order in self:
             if not order._can_approve():
                 raise AccessError(_('You are not authorized to approve this purchase order.'))
@@ -120,7 +116,6 @@ class PurchaseOrder(models.Model):
             order._send_approval_notification()
 
     def action_reject(self):
-        """Reject PO"""
         for order in self:
             if not order._can_approve():
                 raise AccessError(_('You are not authorized to reject this purchase order.'))
@@ -135,7 +130,6 @@ class PurchaseOrder(models.Model):
             }
 
     def _final_approval(self):
-        """Complete the approval process"""
         self.approval_state = 'approved'
         self.approved_by = self.env.user
         self.approved_date = fields.Datetime.now()
@@ -146,12 +140,10 @@ class PurchaseOrder(models.Model):
         )
         self._update_approval_sequence(f'Approved by {self.env.user.name}')
 
-        # Confirm the purchase order
         if self.state in ['draft', 'sent']:
             self.button_confirm()
 
     def _move_to_cfo_approval(self):
-        """Move from dept head to CFO approval"""
         self.approval_state = 'pending_cfo'
         self._assign_approver('cfo')
         self.message_post(
@@ -161,7 +153,6 @@ class PurchaseOrder(models.Model):
         self._update_approval_sequence(f'Approved by {self.env.user.name} (Dept Head)')
 
     def _reject_po(self, reason):
-        """Reject the PO with reason"""
         self.approval_state = 'rejected'
         self.rejected_by = self.env.user
         self.rejected_date = fields.Datetime.now()
@@ -174,7 +165,6 @@ class PurchaseOrder(models.Model):
         self._update_approval_sequence(f'Rejected by {self.env.user.name}: {reason}')
 
     def _can_approve(self):
-        """Check if current user can approve this PO"""
         self.ensure_one()
         user = self.env.user
 
@@ -188,7 +178,6 @@ class PurchaseOrder(models.Model):
         return False
 
     def _assign_approver(self, role):
-        """Assign the appropriate approver based on role"""
         if role == 'manager':
             group = self.env.ref('custom_po_approval.group_po_manager')
         elif role == 'dept_head':
@@ -198,13 +187,11 @@ class PurchaseOrder(models.Model):
         else:
             return
 
-        # Get first user in the group (in practice, you might want more sophisticated assignment logic)
         approvers = group.users
         if approvers:
             self.current_approver = approvers[0]
 
     def _send_approval_notification(self):
-        """Send email notification to approver"""
         if not self.current_approver:
             return
 
@@ -213,11 +200,9 @@ class PurchaseOrder(models.Model):
             template.send_mail(self.id, force_send=True)
 
     def _format_amount(self):
-        """Format amount for display"""
         return f"{self.currency_id.symbol} {self.amount_total:,.2f}"
 
     def _update_approval_sequence(self, action):
-        """Update approval sequence history"""
         timestamp = fields.Datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         new_entry = f"{timestamp}: {action} by {self.env.user.name}"
 
@@ -228,7 +213,6 @@ class PurchaseOrder(models.Model):
 
     @api.model
     def create(self, vals):
-        """Override create to set initial approval state"""
         if 'approval_state' not in vals:
             vals['approval_state'] = 'draft'
         return super(PurchaseOrder, self).create(vals)
@@ -242,6 +226,5 @@ class PurchaseOrderRejectWizard(models.TransientModel):
     rejection_reason = fields.Text(string='Rejection Reason', required=True)
 
     def action_reject_po(self):
-        """Confirm rejection with reason"""
         self.purchase_order_id._reject_po(self.rejection_reason)
         return {'type': 'ir.actions.act_window_close'}
