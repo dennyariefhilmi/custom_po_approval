@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Purchase Order Approval Groups -->
+        <record id="group_po_manager" model="res.groups">
+            <field name="name">PO Manager</field>
+            <field name="category_id" ref="base.module_category_purchase"/>
+            <field name="comment">Can approve POs less than IDR 5 million</field>
+        </record>
+
+        <record id="group_po_department_head" model="res.groups">
+            <field name="name">PO Department Head</field>
+            <field name="category_id" ref="base.module_category_purchase"/>
+            <field name="comment">Can approve POs between IDR 5-20 million (first level)</field>
+        </record>
+
+        <record id="group_po_cfo" model="res.groups">
+            <field name="name">PO CFO</field>
+            <field name="category_id" ref="base.module_category_purchase"/>
+            <field name="comment">Can approve POs above IDR 5 million</field>
+        </record>
+
+    </data>
+</odoo>

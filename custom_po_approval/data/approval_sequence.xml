@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Server Actions for Automated Email Sending -->
+        <record id="server_action_send_approval_email" model="ir.actions.server">
+            <field name="name">Send Approval Email</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="state">code</field>
+            <field name="code">
+                for record in records:
+                    if record.current_approver and record.current_approver.email:
+                        template = env.ref('po_multi_approval.email_template_po_approval_notification')
+                        template.send_mail(record.id, force_send=True)
+            </field>
+        </record>
+
+        <record id="server_action_send_approval_completed_email" model="ir.actions.server">
+            <field name="name">Send Approval Completed Email</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="state">code</field>
+            <field name="code">
+                for record in records:
+                    if record.create_uid and record.create_uid.email:
+                        template = env.ref('po_multi_approval.email_template_po_approval_completed')
+                        template.send_mail(record.id, force_send=True)
+            </field>
+        </record>
+
+        <record id="server_action_send_rejection_email" model="ir.actions.server">
+            <field name="name">Send Rejection Email</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="state">code</field>
+            <field name="code">
+                for record in records:
+                    if record.create_uid and record.create_uid.email:
+                        template = env.ref('po_multi_approval.email_template_po_rejection')
+                        template.send_mail(record.id, force_send=True)
+            </field>
+        </record>
+
+    </data>
+</odoo>

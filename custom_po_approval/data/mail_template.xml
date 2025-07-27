@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Email Template for Approval Notifications -->
+        <record id="email_template_po_approval_notification" model="mail.template">
+            <field name="name">Purchase Order - Approval Notification</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Purchase Order {{ object.name }} - Approval Required</field>
+            <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+            <field name="email_to">{{ object.current_approver.email }}</field>
+            <field name="body_html" type="html">
+              <div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+                <p>Dear {{ object.current_approver.name }},</p>
+                <p>A Purchase Order requires your approval:</p>
+                <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 20px 0;">
+        <tr style="background-color: #f8f9fa;">
+            <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">Purchase Order:</td>
+            <td style="padding: 10px; border: 1px solid #dee2e6;">{{ object.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">Vendor:</td>
+            <td style="padding: 10px; border: 1px solid #dee2e6;">{{ object.partner_id.name }}</td>
+        </tr>
+        <tr style="background-color: #f8f9fa;">
+            <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">Total Amount:</td>
+            <td style="padding: 10px; border: 1px solid #dee2e6;">{{ object.amount_total }} {{ object.currency_id.symbol }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">Status:</td>
+            <td style="padding: 10px; border: 1px solid #dee2e6;">
+                {% if object.approval_state == 'pending_manager' %}
+                    Pending Manager Approval
+                {% elif object.approval_state == 'pending_dept_head' %}
+                    Pending Department Head Approval
+                {% elif object.approval_state == 'pending_cfo' %}
+                    Pending CFO Approval
+                {% elif object.approval_state == 'pending_cfo_direct' %}
+                    Pending CFO Direct Approval
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+
+    <p>Please log in to Odoo to review and approve this purchase order.</p>
+
+    <p>Best regards,<br/>{{ user.name }}</p>
+              </div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <record id="email_template_po_approval_completed" model="mail.template">
+            <field name="name">Purchase Order - Approval Completed</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Purchase Order {{ object.name }} - Approved</field>
+            <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+            <field name="email_to">{{ object.create_uid.email }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <p>Dear {{ object.create_uid.name }},</p>
+
+    <p>Your Purchase Order <strong>{{ object.name }}</strong> has been approved and confirmed.</p>
+
+    <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 20px 0;">
+        <tr style="background-color: #d4edda;">
+            <td style="padding: 10px; border: 1px solid #c3e6cb; font-weight: bold;">Purchase Order:</td>
+            <td style="padding: 10px; border: 1px solid #c3e6cb;">{{ object.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border: 1px solid #c3e6cb; font-weight: bold;">Vendor:</td>
+            <td style="padding: 10px; border: 1px solid #c3e6cb;">{{ object.partner_id.name }}</td>
+        </tr>
+        <tr style="background-color: #d4edda;">
+            <td style="padding: 10px; border: 1px solid #c3e6cb; font-weight: bold;">Total Amount:</td>
+            <td style="padding: 10px; border: 1px solid #c3e6cb;">{{ object.amount_total }} {{ object.currency_id.symbol }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border: 1px solid #c3e6cb; font-weight: bold;">Approved By:</td>
+            <td style="padding: 10px; border: 1px solid #c3e6cb;">{{ object.approved_by.name }}</td>
+        </tr>
+    </table>
+
+    <p>The purchase order has been automatically confirmed and is now ready for processing.</p>
+
+    <p>Best regards,<br/>Approval System</p>
+</div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+        <!-- Email Template for Rejection -->
+        <record id="email_template_po_rejection" model="mail.template">
+            <field name="name">Purchase Order - Rejection Notification</field>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="subject">Purchase Order {{ object.name }} - Rejected</field>
+            <field name="email_from">{{ (object.company_id.email or user.email) }}</field>
+            <field name="email_to">{{ object.create_uid.email }}</field>
+            <field name="body_html" type="html">
+<div style="margin: 0px; padding: 0px; font-family: Arial, sans-serif;">
+    <p>Dear {{ object.create_uid.name }},</p>
+
+    <p>Your Purchase Order <strong>{{ object.name }}</strong> has been rejected.</p>
+
+    <table style="border-collapse: collapse; width: 100%; max-width: 600px; margin: 20px 0;">
+        <tr style="background-color: #f8d7da;">
+            <td style="padding: 10px; border: 1px solid #f5c6cb; font-weight: bold;">Purchase Order:</td>
+            <td style="padding: 10px; border: 1px solid #f5c6cb;">{{ object.name }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border: 1px solid #f5c6cb; font-weight: bold;">Vendor:</td>
+            <td style="padding: 10px; border: 1px solid #f5c6cb;">{{ object.partner_id.name }}</td>
+        </tr>
+        <tr style="background-color: #f8d7da;">
+            <td style="padding: 10px; border: 1px solid #f5c6cb; font-weight: bold;">Total Amount:</td>
+            <td style="padding: 10px; border: 1px solid #f5c6cb;">{{ object.amount_total }} {{ object.currency_id.symbol }}</td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; border: 1px solid #f5c6cb; font-weight: bold;">Rejected By:</td>
+            <td style="padding: 10px; border: 1px solid #f5c6cb;">{{ object.rejected_by.name }}</td>
+        </tr>
+        <tr style="background-color: #f8d7da;">
+            <td style="padding: 10px; border: 1px solid #f5c6cb; font-weight: bold;">Rejection Reason:</td>
+            <td style="padding: 10px; border: 1px solid #f5c6cb;">{{ object.rejection_reason or 'No reason provided' }}</td>
+        </tr>
+    </table>
+
+    <p>Please review the rejection reason and make necessary corrections before resubmitting.</p>
+
+    <p>Best regards,<br/>Approval System</p>
+</div>
+            </field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

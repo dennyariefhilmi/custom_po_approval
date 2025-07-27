@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Purchase Order Form View Extension -->
+        <record id="view_purchase_order_approval_form" model="ir.ui.view">
+            <field name="name">purchase.order.approval.form</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Add approval status header -->
+                <xpath expr="//header" position="inside">
+                    <field name="approval_state" widget="statusbar"
+                           statusbar_visible="draft,submitted,pending_manager,pending_dept_head,pending_cfo,pending_cfo_direct,approved,rejected"/>
+
+                    <!-- Submit for Approval Button -->
+                    <button name="action_submit_for_approval"
+                            string="Submit for Approval"
+                            type="object"
+                            class="btn-primary"
+                            invisible="approval_state != 'draft'"/>
+
+                    <!-- Approve Button -->
+                    <button name="action_approve"
+                            string="Approve"
+                            type="object"
+                            class="btn-success"
+                            invisible="approval_state not in ['pending_manager', 'pending_dept_head', 'pending_cfo', 'pending_cfo_direct']"/>
+
+                    <!-- Reject Button -->
+                    <button name="action_reject"
+                            string="Reject"
+                            type="object"
+                            class="btn-danger"
+                            invisible="approval_state not in ['pending_manager', 'pending_dept_head', 'pending_cfo', 'pending_cfo_direct']"/>
+                </xpath>
+
+                <!-- Add approval information in the main form -->
+                <xpath expr="//field[@name='partner_ref']" position="after">
+                    <field name="amount_total_company" widget="monetary" options="{'currency_field': 'company_currency_id'}"/>
+                    <field name="company_currency_id" invisible="1"/>
+                    <field name="current_approver"/>
+                </xpath>
+
+                <!-- Add approval notebook page -->
+                <xpath expr="//notebook" position="inside">
+                    <page string="Approval Information" name="approval_info">
+                        <group>
+                            <group string="Current Status">
+                                <field name="approval_state" readonly="1"/>
+                                <field name="current_approver" readonly="1"/>
+                            </group>
+                            <group string="Approval History">
+                                <field name="approved_by" readonly="1"/>
+                                <field name="approved_date" readonly="1"/>
+                                <field name="rejected_by" readonly="1" invisible="not rejected_by"/>
+                                <field name="rejected_date" readonly="1" invisible="not rejected_date"/>
+                            </group>
+                        </group>
+                        <group string="Rejection Reason" invisible="not rejection_reason">
+                            <field name="rejection_reason" readonly="1" nolabel="1"/>
+                        </group>
+                        <group string="Approval Sequence History">
+                            <field name="approval_sequence" readonly="1" nolabel="1" widget="text"/>
+                        </group>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <!-- Purchase Order Tree View Extension -->
+        <record id="view_purchase_order_approval_tree" model="ir.ui.view">
+            <field name="name">purchase.order.approval.tree</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_tree"/>
+            <field name="arch" type="xml">
+                <field name="amount_total" position="after">
+                    <field name="approval_state" widget="badge"
+                           decoration-success="approval_state == 'approved'"
+                           decoration-warning="approval_state in ['pending_manager', 'pending_dept_head', 'pending_cfo', 'pending_cfo_direct']"
+                           decoration-danger="approval_state == 'rejected'"
+                           decoration-muted="approval_state == 'draft'"/>
+                    <field name="current_approver"/>
+                </field>
+            </field>
+        </record>
+
+        <!-- Purchase Order Search View Extension -->
+        <record id="view_purchase_order_approval_search" model="ir.ui.view">
+            <field name="name">purchase.order.approval.search</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+            <field name="arch" type="xml">
+    <xpath expr="//field[@name='name']" position="after">
+        <field name="approval_state"/>
+        <field name="current_approver"/>
+    </xpath>
+
+    <xpath expr="//filter[@name='draft']" position="after">
+        <separator/>
+        <filter string="Pending My Approval" name="pending_my_approval"
+                domain="[('current_approver', '=', uid)]"/>
+        <filter string="Pending Manager Approval" name="pending_manager"
+                domain="[('approval_state', '=', 'pending_manager')]"/>
+        <filter string="Pending Department Head Approval" name="pending_dept_head"
+                domain="[('approval_state', '=', 'pending_dept_head')]"/>
+        <filter string="Pending CFO Approval" name="pending_cfo"
+                domain="[('approval_state', 'in', ['pending_cfo', 'pending_cfo_direct'])]"/>
+        <filter string="Approved" name="approved"
+                domain="[('approval_state', '=', 'approved')]"/>
+        <filter string="Rejected" name="rejected"
+                domain="[('approval_state', '=', 'rejected')]"/>
+    </xpath>
+
+    <xpath expr="//group[@expand='0']" position="inside">
+        <filter string="Approval State" name="group_approval_state"
+                context="{'group_by': 'approval_state'}"/>
+        <filter string="Current Approver" name="group_current_approver"
+                context="{'group_by': 'current_approver'}"/>
+    </xpath>
+</field>
+
+        </record>
+
+        <!-- Rejection Wizard Form -->
+        <record id="view_purchase_order_reject_wizard" model="ir.ui.view">
+            <field name="name">purchase.order.reject.wizard.form</field>
+            <field name="model">purchase.order.reject.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Reject Purchase Order">
+                    <group>
+                        <field name="purchase_order_id" readonly="1"/>
+                        <field name="rejection_reason" placeholder="Please provide a reason for rejection..."/>
+                    </group>
+                    <footer>
+                        <button name="action_reject_po" string="Reject" type="object" class="btn-danger"/>
+                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Menu Items for Approval Workflows -->
+        <record id="action_purchase_order_pending_approval" model="ir.actions.act_window">
+            <field name="name">Purchase Orders - Pending My Approval</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('current_approver', '=', uid)]</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No purchase orders pending your approval
+                </p>
+                <p>
+                    Purchase orders that require your approval will appear here.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_purchase_order_pending_approval"
+                  name="Pending My Approval"
+                  parent="purchase.menu_procurement_management"
+                  action="action_purchase_order_pending_approval"
+                  sequence="5"/>
+
+    </data>
+</odoo>
